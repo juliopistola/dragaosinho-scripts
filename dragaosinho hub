@@ -1,6 +1,6 @@
 --[================================================================]--
 -- DRAGAOSINHO HUB - CLEAN ESP, NO FLING, TECLA CUSTOMIZÁVEL E FIX PULL
---[================================================================]--  
+--[================================================================]--
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
@@ -28,7 +28,7 @@ local state = {
 	EspDistance = false,
 	EspName = false,
 	SelectedPlayer = nil,
-	ToggleKey = Enum.KeyCode.RightControl
+	ToggleKey = Enum.KeyCode.RightControl -- Tecla padrão para abrir/fechar o painel
 }
 
 local connections = {}
@@ -451,7 +451,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function()
 	end
 end))
 
--- 👁️ ABA ESP
+-- 👁️ ABA ESP (Blindado contra bugs de tela)
 createToggle(tabEsp, "ESP Box", function(v) state.EspBox = v end)
 createToggle(tabEsp, "ESP Linha", function(v) state.EspLine = v end)
 createToggle(tabEsp, "ESP Vida", function(v) state.EspHealth = v end)
@@ -779,6 +779,7 @@ createActionButton(tabTeleport, "Teleportar até Jogador", function()
 	end
 end)
 
+-- Puxar Jogador Corrigido (Teleporta o alvo direto pra cima do seu boneco sem bugar)
 createActionButton(tabTeleport, "Puxar Jogador (Até você)", function()
 	if state.SelectedPlayer and state.SelectedPlayer.Character then
 		local targetRoot = state.SelectedPlayer.Character:FindFirstChild("HumanoidRootPart")
