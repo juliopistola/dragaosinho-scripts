@@ -16,6 +16,7 @@ local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
 local state = {
 	Noclip = false,
 	Fly = false,
+	FlySpeed = 75, -- Velocidade ajustável do Fly
 	WalkSpeed = 16,
 	JumpPower = 50,
 	AimbotEnabled = false,
@@ -328,10 +329,11 @@ local tabConfig = createTab("CONFIGURAÇÕES", "⚙️")
 -- 🏠 ABA PRINCIPAL
 createToggle(tabPrincipal, "Ativar Noclip", function(v) state.Noclip = v end)
 createToggle(tabPrincipal, "Ativar Fly", function(v) state.Fly = v end)
+createSlider(tabPrincipal, "Velocidade Fly", 10, 300, 75, function(v) state.FlySpeed = v end)
 createSlider(tabPrincipal, "WalkSpeed", 0, 1000, 16, function(v) state.WalkSpeed = v end)
 createSlider(tabPrincipal, "JumpPower", 0, 1000, 50, function(v) state.JumpPower = v end)
 
--- Sistema de Fly e Noclip
+-- Sistema de Fly e Noclip (Atualizado com a Velocidade do Fly)
 local flyBodyVelocity, flyBodyGyro
 table.insert(connections, RunService.RenderStepped:Connect(function()
 	local char = LocalPlayer.Character
@@ -374,7 +376,7 @@ table.insert(connections, RunService.RenderStepped:Connect(function()
 		if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDir = moveDir + Vector3.new(0, 1, 0) end
 		if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then moveDir = moveDir - Vector3.new(0, 1, 0) end
 
-		flyBodyVelocity.Velocity = moveDir * 75
+		flyBodyVelocity.Velocity = moveDir * state.FlySpeed
 	else
 		if flyBodyVelocity then flyBodyVelocity:Destroy(); flyBodyVelocity = nil end
 		if flyBodyGyro then flyBodyGyro:Destroy(); flyBodyGyro = nil end
@@ -779,7 +781,6 @@ createActionButton(tabTeleport, "Teleportar até Jogador", function()
 	end
 end)
 
--- Puxar Jogador Corrigido (Teleporta o alvo direto pra cima do seu boneco sem bugar)
 createActionButton(tabTeleport, "Puxar Jogador (Até você)", function()
 	if state.SelectedPlayer and state.SelectedPlayer.Character then
 		local targetRoot = state.SelectedPlayer.Character:FindFirstChild("HumanoidRootPart")
