@@ -1,6 +1,3 @@
---[================================================================]--
--- DRAGAOSINHO HUB - CLEAN ESP, NO FLING, TECLA CUSTOMIZÁVEL E FIX PULL
---[================================================================]--
 local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
