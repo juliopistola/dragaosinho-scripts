@@ -69,39 +69,20 @@ local function serverRequest(route,key)
  end
  return {ok=true,expiresAt=NEVER_EXPIRES,owner=false},nil
 end
+-- Sempre iniciar como primeira utilizacao: nao reutilizar key de execucoes anteriores.
 local function carregarAcesso()
- local key=licenseCache[cacheKey]
- if type(key)=='string' then savedKey=key end
- if type(readfile)=='function' then
-  local ok,data=pcall(function() return HttpService:JSONDecode(readfile(ACCESS_FILE)) end)
-  if ok and type(data)=='table' and tonumber(data.userId)==LocalPlayer.UserId and type(data.key)=='string' then
-   savedKey=data.key
-  end
- end
- if savedKey=='' then return false end
- local result=serverRequest('/api/validate',savedKey)
- if result then
-  accessExpiresAt=result.expiresAt
-  accessIsOwner=false
-  licenseCache[cacheKey]=savedKey
-  return true
- end
  accessExpiresAt=0
  accessIsOwner=false
+ savedKey=''
  return false
 end
 local function salvarAcesso(key,expiresAt,owner)
+ -- Acesso valido apenas nesta execucao. Nao grava em arquivo nem no ambiente global.
  savedKey=key
  accessExpiresAt=expiresAt
  accessIsOwner=false
- licenseCache[cacheKey]=key
- if type(writefile)=='function' then
-  pcall(function() writefile(ACCESS_FILE,HttpService:JSONEncode({
-   userId=LocalPlayer.UserId,key=key,expiresAt=expiresAt
-  })) end)
- end
 end
-local acessoJaReconhecido=carregarAcesso()
+local acessoJaReconhecido=false
 local Camera = workspace.CurrentCamera
 local parent = LocalPlayer:WaitForChild('PlayerGui')
 pcall(function() if gethui then parent = gethui() or parent end end)
@@ -1769,7 +1750,7 @@ listen(discordBtn.MouseButton1Click,function()
  end
 end)
 
--- Reconhece automaticamente a key anteriormente usada pela conta autorizada.
+-- Reinicio limpo: a key sera solicitada em toda execucao.
 if acessoJaReconhecido and not TESTAR_TELA_KEY then
  task.spawn(function()
   tocarCutscene5Segundos(true)
