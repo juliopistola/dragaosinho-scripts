@@ -29,8 +29,8 @@ local function logoSource()
  return nil
 end
 local LOGO_SOURCE = logoSource()
-local PANEL_NAME = 'JS X1TER'
-local PANEL_NAME_FALLBACK = 'JS X1TER'
+local PANEL_NAME = 'JS MENU'
+local PANEL_NAME_FALLBACK = 'JS MENU'
 
 local Players = game:GetService('Players')
 local UIS = game:GetService('UserInputService')
@@ -1187,7 +1187,7 @@ local function updateAccessLabel()
   accessLabel.Text='DIAS: 999+'
   accessLabel.TextColor3=COLOR.white
  else
-  accessLabel.Text='JS X1TER\nKEY NECESSARIA'
+  accessLabel.Text='JS MENU\nKEY NECESSARIA'
   accessLabel.TextColor3=COLOR.red
  end
 end
@@ -1372,7 +1372,7 @@ button(pages.Config,'Restaurar iluminacao',function()
  notify('Iluminacao restaurada')
 end)
 -- Extras de utilidade: funcionam no cliente e nao prometem poderes de servidor.
-section(pages.Config,'EXTRAS DO JS X1TER')
+section(pages.Config,'EXTRAS DO JS MENU')
 local TeleportService=game:GetService('TeleportService')
 button(pages.Config,'Reconectar ao jogo',function()
  notify('Tentando reconectar...')
@@ -1505,7 +1505,7 @@ local function cleanup()
 end
 _G.CHAT_MENU_DESTROY=cleanup
 button(pages.Config,'DESTRUIR PAINEL',function() cleanup() end)
-note(pages.Config,'JS X1TER | Key vinculada a uma conta. Sem conexao com site externo.')
+note(pages.Config,'JS MENU | Key vinculada a uma conta. Sem conexao com site externo.')
 
 -- ===== LOOPS DE FUNCOES =====
 listen(UIS.JumpRequest,function()
@@ -1710,7 +1710,7 @@ local function tocarCutscene5Segundos(reconhecido)
  local etapas={
   {tempo=1.25,progresso=.25,texto=reconhecido and 'ACESSO RECONHECIDO...' or 'VERIFICANDO KEY...'},
   {tempo=1.50,progresso=.60,texto='CARREGANDO INTERFACE...'},
-  {tempo=1.25,progresso=.90,texto='INICIANDO JS X1TER...'},
+  {tempo=1.25,progresso=.90,texto='INICIANDO JS MENU...'},
   {tempo=1.00,progresso=1.00,texto='ACESSO AUTORIZADO'}
  }
  for _,etapa in ipairs(etapas) do
