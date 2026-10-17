@@ -40,49 +40,83 @@ local Lighting = game:GetService('Lighting')
 local LocalPlayer = Players.LocalPlayer
 local HttpService = game:GetService('HttpService')
 
--- ===== KEY LOCAL RESTRITA A UMA CONTA =====
--- Nao realiza chamadas HTTP ao Google Apps Script.
--- Atencao: scripts locais podem ser alterados por quem recebe o arquivo.
+-- ===== JS MENU | ACESSO PERSISTENTE LOCAL =====
+-- IMPORTANTE: este registro e local ao executor/dispositivo, NAO e uma
+-- validacao central. Nao impede a mesma key em outros aparelhos.
 local AUTHORIZED_USER_ID = 7959202313
-local AUTHORIZED_SECONDARY_USER_ID = 0 -- substitua 0 pelo UserId de sua conta secundaria
-local ACCESS_KEY = 'JS311014'
-local NEVER_EXPIRES = 32503680000 -- data distante, usada somente para compatibilidade visual
-local ACCESS_FILE = 'JS_X1TER_KEY_'..tostring(LocalPlayer.UserId)..'.json'
-local licenseCache = (_G or {})
-pcall(function()
- if type(getgenv)=='function' then
-  local env=getgenv()
-  if type(env)=='table' then licenseCache=env end
- end
-end)
-local cacheKey='JS_X1TER_KEY_'..tostring(LocalPlayer.UserId)
-local accessExpiresAt=0
-local accessIsOwner=false
-local savedKey=''
+local AUTHORIZED_SECONDARY_USER_ID = 0
+local PAID_KEY = 'JS311014'
+local FREE_KEY = 'GRATISKEY1234'
+local FREE_SECONDS = 24 * 60 * 60
+local NEVER_EXPIRES = 32503680000
+local ACCESS_FILE = 'JS_MENU_ACESSO_' .. tostring(LocalPlayer.UserId) .. '.json'
+local accessExpiresAt = 0
+local accessIsOwner = false
+local savedKey = ''
+local accessRecord = nil
+local function loadRecord()
+ if type(readfile)~='function' or type(isfile)~='function' then return nil end
+ local ok,record=pcall(function()
+  if not isfile(ACCESS_FILE) then return nil end
+  return HttpService:JSONDecode(readfile(ACCESS_FILE))
+ end)
+ if ok and type(record)=='table' and tonumber(record.userId)==LocalPlayer.UserId then return record end
+ return nil
+end
+local function storeRecord(record)
+ if type(writefile)~='function' then return false end
+ local ok=pcall(function() writefile(ACCESS_FILE,HttpService:JSONEncode(record)) end)
+ return ok
+end
 local function serverRequest(route,key)
  local normalized=tostring(key or ''):match('^%s*(.-)%s*$'):upper()
- if normalized~=ACCESS_KEY then
-  return nil,'KEY INVALIDA, TENTE NOVAMENTE'
+ local now=os.time()
+ if normalized==FREE_KEY then
+  if not (type(readfile)=='function' and type(writefile)=='function' and type(isfile)=='function') then
+   return nil,'SALVAMENTO INDISPONIVEL NESTE EXECUTOR'
+  end
+  if accessRecord and accessRecord.freeUsed then
+   return nil,'VOCE JA USOU ESSA KEY GRATIS'
+  end
+  local record={userId=LocalPlayer.UserId,freeUsed=true,freeExpiresAt=now+FREE_SECONDS,
+   activeKey=FREE_KEY,expiresAt=now+FREE_SECONDS}
+  if not storeRecord(record) then return nil,'NAO FOI POSSIVEL SALVAR O ACESSO' end
+  accessRecord=record
+  return {ok=true,expiresAt=record.expiresAt,owner=false},nil
+ elseif normalized==PAID_KEY then
+  if LocalPlayer.UserId~=AUTHORIZED_USER_ID and LocalPlayer.UserId~=AUTHORIZED_SECONDARY_USER_ID then
+   return nil,'KEY RESTRITA, TENTE NOVAMENTE'
+  end
+  local record=accessRecord or {userId=LocalPlayer.UserId}
+  record.activeKey=PAID_KEY
+  record.expiresAt=NEVER_EXPIRES
+  if not storeRecord(record) then return nil,'NAO FOI POSSIVEL SALVAR O ACESSO' end
+  accessRecord=record
+  return {ok=true,expiresAt=NEVER_EXPIRES,owner=false},nil
  end
- if LocalPlayer.UserId~=AUTHORIZED_USER_ID and LocalPlayer.UserId~=AUTHORIZED_SECONDARY_USER_ID then
-  return nil,'KEY RESTRITA, TENTE NOVAMENTE'
- end
- return {ok=true,expiresAt=NEVER_EXPIRES,owner=false},nil
+ return nil,'KEY INVALIDA, TENTE NOVAMENTE'
 end
--- Sempre iniciar como primeira utilizacao: nao reutilizar key de execucoes anteriores.
 local function carregarAcesso()
+ accessRecord=loadRecord()
+ if accessRecord and tonumber(accessRecord.expiresAt) and tonumber(accessRecord.expiresAt)>os.time() then
+  if accessRecord.activeKey==FREE_KEY or
+   (accessRecord.activeKey==PAID_KEY and
+    (LocalPlayer.UserId==AUTHORIZED_USER_ID or LocalPlayer.UserId==AUTHORIZED_SECONDARY_USER_ID)) then
+   savedKey=accessRecord.activeKey
+   accessExpiresAt=tonumber(accessRecord.expiresAt)
+   return true
+  end
+ end
  accessExpiresAt=0
- accessIsOwner=false
  savedKey=''
  return false
 end
 local function salvarAcesso(key,expiresAt,owner)
- -- Acesso valido apenas nesta execucao. Nao grava em arquivo nem no ambiente global.
  savedKey=key
  accessExpiresAt=expiresAt
  accessIsOwner=false
 end
-local acessoJaReconhecido=false
+local acessoJaReconhecido=carregarAcesso()
 local Camera = workspace.CurrentCamera
 local parent = LocalPlayer:WaitForChild('PlayerGui')
 pcall(function() if gethui then parent = gethui() or parent end end)
@@ -1165,7 +1199,7 @@ accessLabel.TextXAlignment=Enum.TextXAlignment.Center
 local function updateAccessLabel()
  if not alive or not accessLabel.Parent then return end
  if accessExpiresAt>os.time() then
-  accessLabel.Text='DIAS: 999+'
+  accessLabel.Text=(savedKey==FREE_KEY and ('HORAS: '..tostring(math.max(1,math.ceil((accessExpiresAt-os.time())/3600)))) or 'DIAS: 999+')
   accessLabel.TextColor3=COLOR.white
  else
   accessLabel.Text='JS MENU\nKEY NECESSARIA'
@@ -1750,7 +1784,7 @@ listen(discordBtn.MouseButton1Click,function()
  end
 end)
 
--- Reinicio limpo: a key sera solicitada em toda execucao.
+-- Reabre automaticamente enquanto o acesso salvo estiver valido.
 if acessoJaReconhecido and not TESTAR_TELA_KEY then
  task.spawn(function()
   tocarCutscene5Segundos(true)
@@ -1765,13 +1799,12 @@ task.spawn(function()
    accessExpiresAt=0
    accessIsOwner=false
    savedKey=''
-   licenseCache[cacheKey]=nil
-   if type(writefile)=='function' then pcall(function() writefile(ACCESS_FILE,'{}') end) end
+   -- Nao apaga o registro: freeUsed impede reutilizacao local da key gratis.
    setMenuOpen(false)
    bubble.Visible=false
    loading.Visible=false
    keyFrame.Visible=true
-   keyError.Text='KEY INVALIDA, TENTE NOVAMENTE'
+   keyError.Text=(accessRecord and accessRecord.freeUsed and accessRecord.activeKey==FREE_KEY) and 'VOCE JA USOU ESSA KEY GRATIS' or 'ACESSO EXPIRADO'
    keyError.TextColor3=COLOR.red
    updateAccessLabel()
   end
