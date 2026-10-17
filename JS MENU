@@ -382,8 +382,8 @@ make('UIPadding',{PaddingTop=UDim.new(0,7),PaddingLeft=UDim.new(0,6),PaddingRigh
 local content=make('Frame',{Position=UDim2.fromOffset(138,55),Size=UDim2.new(1,-146,1,-64),BackgroundColor3=COLOR.side,BackgroundTransparency=.17,BorderSizePixel=0},menu);rounded(content,9)
 
 local pages,nav={},{ }
-local tabNames={'Principais','ESP','Aimbot','Teleporte','Config'}
-local tabLabels={Principais='PLAYER / MOVEMENT',ESP='VISUALS / ESP',Aimbot='AIMBOT',Teleporte='TELEPORTE',Config='SETTINGS / CONFIG'}
+local tabNames={'Principais','ESP','Aimbot','Teleporte','Utilidades','Config'}
+local tabLabels={Principais='PLAYER / MOVEMENT',ESP='VISUALS / ESP',Aimbot='AIMBOT',Teleporte='TELEPORTE',Utilidades='UTILIDADES',Config='SETTINGS / CONFIG'}
 for i,name in ipairs(tabNames) do
  local b=make('TextButton',{Text=tabLabels[name] or name,Font=Enum.Font.GothamBold,TextSize=10,TextColor3=COLOR.white,BackgroundColor3=COLOR.button,Size=UDim2.new(1,0,0,38),LayoutOrder=i,BorderSizePixel=0},sidebar)
  rounded(b,8);nav[name]=b
@@ -1216,7 +1216,7 @@ end)
 
 -- ===== JS X1TER | UTILIDADES ADICIONAIS =====
 do
- local page=pages.Config
+ local page=pages.Utilidades
  section(page,'UTILIDADES 2.0')
  -- Camera de observacao: restaura a camera ao desligar.
  local spectateTarget=nil
@@ -1369,38 +1369,38 @@ do
  note(page,'FPS Boost altera apenas efeitos locais. Server Hop depende da plataforma e pode reconectar no mesmo servidor.')
 end
 
--- ===== CONFIG / LIMPEZA =====
-section(pages.Config,'DESEMPENHO')
+-- ===== UTILIDADES: DESEMPENHO / MUNDO / HUD =====
+section(pages.Utilidades,'DESEMPENHO')
 local fpsOverlay=text(gui,'',12,UDim2.new(0,15,0,55),UDim2.fromOffset(155,26))
 fpsOverlay.TextXAlignment=Enum.TextXAlignment.Left
 fpsOverlay.Visible=false
-toggle(pages.Config,'Mostrar FPS na tela',false,function(v) fpsOverlay.Visible=v end)
-section(pages.Config,'MUNDO E VISUAL')
-slider(pages.Config,'Horario local',0,24,14,function(v) settings.clock=v;Lighting.ClockTime=v end)
-toggle(pages.Config,'FullBright (local)',false,function(v)
+toggle(pages.Utilidades,'Mostrar FPS na tela',false,function(v) fpsOverlay.Visible=v end)
+section(pages.Utilidades,'MUNDO E VISUAL')
+slider(pages.Utilidades,'Horario local',0,24,14,function(v) settings.clock=v;Lighting.ClockTime=v end)
+toggle(pages.Utilidades,'FullBright (local)',false,function(v)
  settings.fullBright=v
  Lighting.Brightness=v and 4 or originals.brightness
  Lighting.Ambient=v and COLOR.white or originals.ambient
 end)
-button(pages.Config,'Restaurar iluminacao',function()
+button(pages.Utilidades,'Restaurar iluminacao',function()
  Lighting.ClockTime=originals.clock;Lighting.Brightness=originals.brightness;Lighting.Ambient=originals.ambient
  notify('Iluminacao restaurada')
 end)
 -- Extras de utilidade: funcionam no cliente e nao prometem poderes de servidor.
-section(pages.Config,'EXTRAS DO JS MENU')
+section(pages.Utilidades,'EXTRAS DO JS MENU')
 local TeleportService=game:GetService('TeleportService')
-button(pages.Config,'Reconectar ao jogo',function()
+button(pages.Utilidades,'Reconectar ao jogo',function()
  notify('Tentando reconectar...')
  local ok,err=pcall(function() TeleportService:TeleportToPlaceInstance(game.PlaceId,game.JobId,LocalPlayer) end)
  if not ok then notify('Nao foi possivel reconectar: '..tostring(err):sub(1,65)) end
 end)
-button(pages.Config,'Copiar ID do jogo',function()
+button(pages.Utilidades,'Copiar ID do jogo',function()
  if type(setclipboard)=='function' then
   local ok=pcall(setclipboard,tostring(game.PlaceId))
   notify(ok and 'ID do jogo copiado' or 'Nao foi possivel copiar')
  else notify('Copiar nao disponivel neste executor') end
 end)
-button(pages.Config,'Copiar ID do servidor',function()
+button(pages.Utilidades,'Copiar ID do servidor',function()
  if type(setclipboard)=='function' then
   local ok=pcall(setclipboard,tostring(game.JobId))
   notify(ok and 'ID do servidor copiado' or 'Nao foi possivel copiar')
@@ -1424,11 +1424,11 @@ local function setLowEffects(enabled)
   table.clear(originalEffects)
  end
 end
-toggle(pages.Config,'Reduzir efeitos visuais (local)',false,function(v)
+toggle(pages.Utilidades,'Reduzir efeitos visuais (local)',false,function(v)
  setLowEffects(v)
  notify(v and 'Efeitos de pos-processamento reduzidos' or 'Efeitos restaurados')
 end)
-note(pages.Config,'Extras locais. Reconexao depende do Roblox. Reduzir efeitos pode ajudar no FPS, sem garantia.')
+note(pages.Utilidades,'Extras locais. Reconexao depende do Roblox. Reduzir efeitos pode ajudar no FPS, sem garantia.')
 -- HUD DE TECLAS: somente W A S D, sem nomes ou etiquetas.
 local keysHud=make('Frame',{
  Name='JS_KeysHUD',Size=UDim2.fromOffset(128,94),
@@ -1455,7 +1455,7 @@ local function keySquare(letter,pressed)
  end
 end
 local keyOverlayEnabled=false
-toggle(pages.Config,'Mostrar teclas W A S D',false,function(v)
+toggle(pages.Utilidades,'Mostrar teclas W A S D',false,function(v)
  keyOverlayEnabled=v;keysHud.Visible=v
  if not v then for letter in pairs(keysSquares) do keySquare(letter,false) end end
 end)
@@ -1469,6 +1469,8 @@ listen(UIS.InputEnded,function(input)
  local letter=input.KeyCode.Name
  if keysSquares[letter] then keySquare(letter,false) end
 end)
+
+-- ===== CONFIGURACOES: ATALHOS E CONTROLE =====
 section(pages.Config,'TECLAS PERSONALIZADAS')
 note(pages.Config,'Clique em DEFINIR, depois aperte uma tecla. ESC remove o atalho (exceto abrir painel). Todas as funcoes comecam desligadas.')
 local waitingForKey=nil
